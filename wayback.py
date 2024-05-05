@@ -118,13 +118,14 @@ class HTML:
     DEAD_LINKS = ('pagead/js/adsbygoogle.js', 'dict/terms/exit_code', 'dict/terms/filename', 'dict/terms/ctime', 'dict/terms/positional_parameter', 'dict/start', 'dict/terms/atime', 'dict/terms/variable', 'dict/terms/shebang', 'dict/terms/return_status')
 
     def get_paths(path: path.Pathlib):
+        logging.debug(path)
         data = lxml.html.fromstring(path.read_text())
         href = {urllib.parse.urlparse(element.attrib['href']).path.lstrip('/') for filter in ('a[href]', 'link[href]') for element in data.cssselect(filter) if (element.attrib['href'].startswith('/'))}
         src = {urllib.parse.urlparse(element.attrib['src']).path.lstrip('/') for filter in ('script[src]', 'img[src]') for element in data.cssselect(filter) if (element.attrib['src'].startswith('/'))}
         return href | src
 
     def export():
-        file_paths = sorted(file_path for file_path in pathlib.Path('.').rglob('*') if (file_path.is_file()) and (not file_path.suffix))
+        file_paths = sorted(file_path for file_path in pathlib.Path('.').rglob('*') if (file_path.is_file()) and (not file_path.suffix) and (not str(file_path).startswith('.git')))
         unexported = {path: file for file in file_paths for path in HTML.get_paths(file) if (not pathlib.Path(path).exists()) and (not path.startswith('_export'))}
         logging.info(f'will export the following:\n{list(unexported.keys())}\n')
         for path, source in unexported.items():
